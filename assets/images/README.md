@@ -1,23 +1,23 @@
-# Assets Images Folder
+# 图片资源目录
 
-## 📁 Folder này chứa hình ảnh và GIF cho extension
+## 📁 本目录存放扩展所需的图片和 GIF 资源
 
-### 🎯 Files cần thiết:
+### 🎯 必需文件：
 
-1. **loading.gif** - GIF loading animation
-   - Kích thước khuyến nghị: 80px width
-   - Format: GIF với animation
-   - Mô tả: Hiển thị khi capture trang lớn mất thời gian
+1. **loading.gif** — 加载动画
+   - 建议尺寸：80px 宽
+   - 格式：带动画的 GIF
+   - 说明：截取超长页面耗时较久时展示
 
-### 📝 Hướng dẫn:
-1. Upload file `loading.gif` vào folder này
-2. Restart extension để load GIF mới
-3. GIF sẽ hiện khi capture trang lớn > 3 giây
+### 📝 使用说明：
+1. 将 `loading.gif` 放入本目录
+2. 重新加载扩展以生效
+3. 截取耗时超过 3 秒的超长页面时会显示该动画
 
-### 🔧 Cấu trúc:
+### 🔧 目录结构：
 ```
 assets/
 └── images/
-    ├── loading.gif     (GIF bạn cần upload)
-    └── README.md      (file này)
-``` 
+    ├── loading.gif     （需自行放置的 GIF）
+    └── README.md       （本文件）
+```

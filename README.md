@@ -8,7 +8,7 @@
 - **🎨 现代化界面** — 实时进度条与加载动画
 - **⚙️ 高级选项** — PNG/JPEG 格式、质量控制、超时设置
 - **🛡️ 智能错误处理** — 自动重试与智能恢复
-- **🌐 多语言** — 支持英文和越南语界面
+- **🌐 多语言** — 支持中文和英文界面
 - **✂️ 图片裁剪** — 内置裁剪工具，可精确编辑
 - **📋 一键复制** — 截图直接复制到剪贴板
 - **🎯 快速处理** — 为速度与稳定性优化
@@ -43,7 +43,7 @@
 - **格式**：PNG（高质量）或 JPEG（体积小）
 - **质量**：JPEG 压缩级别（10-100%）
 - **超时**：最长截取时间（3-120 秒）
-- **语言**：英文 / 越南语切换
+- **语言**：中文 / 英文切换
 
 ## 🔧 高级特性
 
@@ -57,7 +57,7 @@
 ## 🌐 多语言支持
 
 - **English** — 默认界面语言
-- **Tiếng Việt** — 完整越南语翻译
+- **中文** — 完整中文翻译
 - 点击弹窗中的 🌐 按钮切换语言
 
 ## 📱 兼容性
@@ -79,7 +79,7 @@ MIT License — 详见 [LICENSE](LICENSE) 文件
 
 ## 🙏 致谢
 
-本项目基于 Peter Coles 的开源项目 [Full Page Screen Capture](https://github.com/mrcoles/full-page-screen-capture-chrome-extension) 二次开发，增加了现代化功能与越南语本地化。
+本项目基于 Peter Coles 的开源项目 [Full Page Screen Capture](https://github.com/mrcoles/full-page-screen-capture-chrome-extension) 二次开发，增加了现代化功能与中文本地化。
 
 ---
 

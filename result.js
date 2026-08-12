@@ -27,13 +27,13 @@ function initLanguageSystem() {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                Languages.currentLang = Languages.currentLang === 'en' ? 'vi' : 'en';
+                Languages.currentLang = Languages.currentLang === 'en' ? 'zh' : 'en';
                 console.log('Switching to:', Languages.currentLang);
                 
                 Languages.saveLanguage();
                 Languages.updateUI();
                 
-                languageToggle.innerHTML = Languages.currentLang === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN';
+                languageToggle.innerHTML = Languages.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
                 
                 updateThemeToggleText();
                 // 重新渲染以应用新语言
@@ -129,9 +129,9 @@ function loadSavedDownloadPath() {
             chooseLocationBtn.textContent = Languages.getText('autoSave');
             chooseLocationBtn.title = Languages.getText('autoSaveTooltip');
     } else {
-            saveLocationInput.value = 'Trình duyệt sẽ hỏi nơi lưu từng file khi tải xuống';
-            chooseLocationBtn.textContent = 'Tự động lưu';
-            chooseLocationBtn.title = 'Nhấp để chuyển về chế độ tự động lưu vào thư mục Downloads';
+            saveLocationInput.value = '下载时浏览器会询问每个文件的保存位置';
+            chooseLocationBtn.textContent = '自动保存';
+            chooseLocationBtn.title = '点击切换回自动保存到下载目录';
         }
     } else {
         if (typeof Languages !== 'undefined') {
@@ -139,9 +139,9 @@ function loadSavedDownloadPath() {
             chooseLocationBtn.textContent = Languages.getText('chooseLocationButton');
             chooseLocationBtn.title = Languages.getText('chooseLocationTooltip');
         } else {
-            saveLocationInput.value = 'File sẽ được lưu vào thư mục Downloads mặc định của bạn';
-            chooseLocationBtn.textContent = 'Chọn vị trí lưu';
-            chooseLocationBtn.title = 'Nhấp để chọn nơi lưu file cho mỗi lần tải xuống';
+            saveLocationInput.value = '文件将保存到默认下载目录';
+            chooseLocationBtn.textContent = '选择保存位置';
+            chooseLocationBtn.title = '点击选择每次下载的保存位置';
         }
     }
 }
@@ -164,7 +164,7 @@ function displayImages() {
         }
     } else {
         // 无语言包时回退到越南语
-        infoSection.innerHTML = `<strong>Thông tin:</strong> Đã chụp ${originalUrls.length} hình ảnh từ: <em>${currentPageUrl}</em>`;
+        infoSection.innerHTML = `<strong>信息：</strong>已从以下页面截取 ${originalUrls.length} 张图片：<em>${currentPageUrl}</em>`;
     }
     
     const defaultName = generateDefaultFilename();
@@ -185,7 +185,7 @@ function displayImages() {
             let cropStatus = '';
             if (croppedImages[index]) {
                 cropStatus = typeof Languages !== 'undefined' ? 
-                    Languages.getText('croppedStatus') : ' (Đã cắt)';
+                    Languages.getText('croppedStatus') : '（已裁剪）';
             }
             
             let imageInfo = '';
@@ -209,7 +209,7 @@ function displayImages() {
         let cropStatus = '';
         if (croppedImages[0]) {
             const statusText = typeof Languages !== 'undefined' ? 
-                Languages.getText('croppedImageStatus') : 'Đã cắt ảnh';
+                Languages.getText('croppedImageStatus') : '已裁剪';
             cropStatus = `<br><small style="color: #4CAF50;">${statusText}</small>`;
         }
         container.innerHTML = `
@@ -235,8 +235,8 @@ function showError() {
         title = Languages.getText('noImageFoundTitle');
         message = Languages.getText('noImageFoundMessage');
     } else {
-        title = 'Không tìm thấy hình ảnh';
-        message = 'Có vẻ như không có dữ liệu chụp màn hình nào được tìm thấy.';
+        title = '未找到图片';
+        message = '未找到任何截图数据。';
     }
     
     container.innerHTML = `
@@ -263,9 +263,9 @@ function chooseDownloadLocation() {
             chooseLocationBtn.textContent = Languages.getText('autoSave');
             chooseLocationBtn.title = Languages.getText('autoSaveTooltip');
     } else {
-            saveLocationInput.value = 'Trình duyệt sẽ hỏi nơi lưu từng file khi tải xuống';
-            chooseLocationBtn.textContent = 'Tự động lưu';
-            chooseLocationBtn.title = 'Nhấp để chuyển về chế độ tự động lưu vào thư mục Downloads';
+            saveLocationInput.value = '下载时浏览器会询问每个文件的保存位置';
+            chooseLocationBtn.textContent = '自动保存';
+            chooseLocationBtn.title = '点击切换回自动保存到下载目录';
         }
     } else {
         if (typeof Languages !== 'undefined') {
@@ -273,9 +273,9 @@ function chooseDownloadLocation() {
             chooseLocationBtn.textContent = Languages.getText('chooseLocationButton');
             chooseLocationBtn.title = Languages.getText('chooseLocationTooltip');
         } else {
-            saveLocationInput.value = 'File sẽ được lưu vào thư mục Downloads mặc định của bạn';
-            chooseLocationBtn.textContent = 'Chọn vị trí lưu';
-            chooseLocationBtn.title = 'Nhấp để chọn nơi lưu file cho mỗi lần tải xuống';
+            saveLocationInput.value = '文件将保存到默认下载目录';
+            chooseLocationBtn.textContent = '选择保存位置';
+            chooseLocationBtn.title = '点击选择每次下载的保存位置';
         }
     }
 }
@@ -298,7 +298,7 @@ async function downloadImageWithChrome(url, filename, index = null) {
             downloadUrl = pdfUrl;
         } else {
             const errorMsg = typeof Languages !== 'undefined' ? 
-                Languages.getText('pdfCreationError') : 'Không thể tạo PDF. Vui lòng thử lại.';
+                Languages.getText('pdfCreationError') : '无法创建 PDF，请重试。';
             alert(errorMsg);
             return;
         }
@@ -379,7 +379,7 @@ function createPDFFromImages(imageUrls, filename) {
         if (!window.jspdf || !window.jspdf.jsPDF) {
             console.error('jsPDF library not loaded');
             const errorMsg = typeof Languages !== 'undefined' ? 
-                Languages.getText('pdfLibraryError') : 'Thư viện PDF chưa được tải. Vui lòng thử lại sau vài giây.';
+                Languages.getText('pdfLibraryError') : 'PDF 库尚未加载完成，请稍等几秒后重试。';
             alert(errorMsg);
             resolve(null);
             return;
@@ -518,7 +518,7 @@ async function downloadAllImages() {
             const isLoaded = await ensureJsPDFLoaded();
             if (!isLoaded) {
                 console.error('Local jsPDF library not available');
-                alert('Lỗi thư viện PDF. Vui lòng tải lại trang và thử lại.');
+                alert('PDF 库出错，请刷新页面后重试。');
                 return;
             }
         }
@@ -537,21 +537,21 @@ async function downloadAllImages() {
         
         console.log('Image URLs for PDF:', imageUrls);
         
-        showSuccessMessage('Đang tạo file PDF... Vui lòng đợi.');
+        showSuccessMessage('正在生成 PDF 文件…请稍候。');
         
         try {
             const pdfUrl = await createPDFFromImages(imageUrls, filename);
             if (pdfUrl) {
                 console.log('PDF created, starting download...');
                 downloadSingleImage(pdfUrl, `${filename}.pdf`);
-                showSuccessMessage('Tạo PDF thành công! Đang tải xuống...');
+                showSuccessMessage('PDF 生成成功！正在下载…');
             } else {
                 console.error('PDF creation failed');
-                alert('Không thể tạo PDF. Có thể do:\n1. Ảnh quá lớn\n2. Lỗi mạng\n3. Thư viện PDF chưa sẵn sàng\n\nVui lòng thử lại.');
+                alert('无法创建 PDF，可能原因：\n1. 图片过大\n2. 网络错误\n3. PDF 库未就绪\n\n请重试。');
             }
         } catch (error) {
             console.error('Error in PDF creation process:', error);
-            alert('Lỗi khi tạo PDF: ' + error.message);
+            alert('创建 PDF 时出错：' + error.message);
         }
         return;
     }
@@ -649,7 +649,7 @@ function downloadPDFFallback(url, filename) {
         console.log('PDF download initiated via fallback method');
     } catch (error) {
         console.error('PDF fallback download failed:', error);
-        alert('Không thể tải xuống PDF. Vui lòng thử lại.');
+        alert('无法下载 PDF，请重试。');
     }
 }
 
@@ -949,7 +949,7 @@ function updateCropDimensions() {
     const realWidth = Math.round(selectionRect.width * scaleX);
     const realHeight = Math.round(selectionRect.height * scaleY);
     
-    dimensionsDiv.innerHTML = `📏 Ảnh gốc: ${img.naturalWidth} × ${img.naturalHeight}<br>🎯 <span style="color: #FF5722; font-weight: bold;">Vùng chọn: ${realWidth} × ${realHeight} pixels</span>`;
+    dimensionsDiv.innerHTML = `📏 原图：${img.naturalWidth} × ${img.naturalHeight}<br>🎯 <span style="color: #FF5722; font-weight: bold;">选区：${realWidth} × ${realHeight} 像素</span>`;
 }
 
 // 重置裁剪选区
@@ -967,7 +967,7 @@ function resetCropSelection() {
 // 从侧边栏应用裁剪
 function applyCropFromSidebar() {
     if (!cropSelection) {
-        alert('Vui lòng bật chế độ cắt trước!');
+        alert('请先开启裁剪模式！');
         return;
     }
     
@@ -976,7 +976,7 @@ function applyCropFromSidebar() {
     const fileFormat = document.getElementById('file-format').value;
     
     if (!img) {
-        alert('Không thể tìm thấy ảnh!');
+        alert('找不到图片！');
         return;
     }
     
@@ -997,7 +997,7 @@ function applyCropFromSidebar() {
     // 校验尺寸是否合法
     if (cropWidth < 10 || cropHeight < 10) {
         const errorMsg = typeof Languages !== 'undefined' ? 
-            Languages.getText('cropTooSmallError') : 'Vùng cắt quá nhỏ! Vui lòng chọn vùng lớn hơn.';
+            Languages.getText('cropTooSmallError') : '裁剪区域太小！请选择更大的区域。';
         alert(errorMsg);
         return;
     }
@@ -1057,7 +1057,7 @@ function applyCropFromSidebar() {
     if (typeof Languages !== 'undefined') {
         successMsg = Languages.getText('cropSuccessMessage').replace('{format}', fileFormat.toUpperCase());
     } else {
-        successMsg = `Đã áp dụng cắt ảnh thành công! (${fileFormat.toUpperCase()})`;
+        successMsg = `裁剪应用成功！（${fileFormat.toUpperCase()}）`;
     }
     showSuccessMessage(successMsg);
 }
@@ -1210,7 +1210,7 @@ async function copyImagesToClipboard() {
         if (typeof Languages !== 'undefined') {
             successMsg = Languages.getText('copySuccessMessage') || 'Image copied to clipboard successfully!';
         } else {
-            successMsg = 'Đã sao chép ảnh vào clipboard!';
+            successMsg = '图片已复制到剪贴板！';
         }
         showSuccessMessage(successMsg);
         
@@ -1235,7 +1235,7 @@ async function copyImagesToClipboard() {
         if (typeof Languages !== 'undefined') {
             errorMsg = Languages.getText('copyErrorMessage') || 'Failed to copy image. Your browser may not support this feature.';
         } else {
-            errorMsg = 'Không thể sao chép ảnh. Trình duyệt có thể không hỗ trợ tính năng này.';
+            errorMsg = '无法复制图片，您的浏览器可能不支持此功能。';
         }
         
         // 在控制台输出详细错误

@@ -1,7 +1,7 @@
-// Full Web Capture 扩展的语言切换模块，支持英文/越南文
+// Full Web Capture 扩展的语言切换模块，支持中文/英文
 
 const Languages = {
-    // 多语言资源表：en 为英文，vi 为越南文（字符串为 UI 资源，勿改动）
+    // 多语言资源表：en 为英文，zh 为中文（字符串为 UI 资源，勿改动）
     data: {
         en: {
             // 主界面按钮
@@ -10,7 +10,7 @@ const Languages = {
             
             // 下拉菜单中的语言选项
             languageEnglish: "English",
-            languageVietnamese: "Tiếng Việt",
+            languageChinese: "中文",
             
             // 加载状态提示
             initializingCapture: "Initializing capture...",
@@ -125,118 +125,117 @@ const Languages = {
             copyErrorMessage: "Failed to copy image. Your browser may not support this feature."
         },
         
-        // 越南文资源（键结构与英文一致）
-        vi: {
-            configToggle: "⚙️ Cài đặt",
-            languageToggle: "🌐 Ngôn ngữ",
-            
+        // 中文资源（键结构与英文一致）
+        zh: {
+            configToggle: "⚙️ 配置",
+            languageToggle: "🌐 语言",
+
             languageEnglish: "English",
-            languageVietnamese: "Tiếng Việt",
-            
-            initializingCapture: "Đang khởi tạo chụp màn hình...",
-            analyzingPage: "Đang phân tích cấu trúc trang...",
-            capturingPage: "Đang chụp các phần của trang...",
-            processingScreenshots: "Đang xử lý ảnh chụp màn hình...",
-            finalizingCapture: "Đang hoàn thiện quá trình chụp...",
-            captureCompleted: "Hoàn thành chụp màn hình!",
-            processingLargePage: "Đang xử lý trang lớn...",
-            pleaseWaitCapture: "Vui lòng đợi trong khi chúng tôi chụp toàn bộ nội dung",
-            
-            configTitle: "📸 Cấu hình chụp màn hình",
-            formatLabel: "Định dạng:",
-            formatPngOption: "PNG (Không nén, kích thước lớn hơn)",
-            formatJpegOption: "JPEG (Nén, kích thước nhỏ hơn)",
-            qualityLabel: "Chất lượng JPEG:",
-            timeoutLabel: "Thời gian chờ (giây):",
-            retryLabel: "Số lần thử lại:",
-            errorScreenshotLabel: "Chụp ảnh khi có lỗi",
-            debugModeLabel: "Chế độ debug (nhật ký chi tiết)",
-            saveButton: "💾 Lưu",
-            resetButton: "🔄 Đặt lại",
-            closeButton: "✕ Đóng",
-            configSaved: "✅ Cấu hình đã được lưu! Thay đổi sẽ áp dụng cho lần chụp tiếp theo.",
-            
-            captureSuccessTitle: "✅ Chụp thành công!",
-            customFilenameLabel: "Tên file:",
-            filenamePlaceholder: "Nhập tên file tùy chỉnh",
-            successNote: "Hình ảnh đã được mở trong tab mới. Bạn cũng có thể tải xuống với tên tùy chỉnh.",
-            copyButton: "Sao chép",
-            downloadButton: "📥 Tải xuống",
-            
-            splitImageWarning: "Lưu ý: trang của bạn quá lớn để trình duyệt Chrome có thể chụp thành một hình ảnh. Nó sẽ được chia thành",
-            multipleImages: "nhiều",
-            images: "hình ảnh.",
-            
-            invalidUrlTitle: "🚫 URL không hợp lệ",
-            invalidUrlMessage: "Full Page Screen Capture không thể chạy trên URL này do chính sách của Chrome Web Store.",
+            languageChinese: "中文",
+
+            initializingCapture: "正在初始化截图…",
+            analyzingPage: "正在分析页面结构…",
+            capturingPage: "正在截取页面分区…",
+            processingScreenshots: "正在处理截图…",
+            finalizingCapture: "正在完成截图…",
+            captureCompleted: "截图完成！",
+            processingLargePage: "正在处理超长页面…",
+            pleaseWaitCapture: "正在截取全部内容，请稍候",
+
+            configTitle: "📸 截图配置",
+            formatLabel: "格式：",
+            formatPngOption: "PNG（无损，体积较大）",
+            formatJpegOption: "JPEG（压缩，体积较小）",
+            qualityLabel: "JPEG 质量：",
+            timeoutLabel: "超时时间（秒）：",
+            retryLabel: "重试次数：",
+            errorScreenshotLabel: "出错时保存截图",
+            debugModeLabel: "调试模式（详细日志）",
+            saveButton: "💾 保存",
+            resetButton: "🔄 重置",
+            closeButton: "✕ 关闭",
+            configSaved: "✅ 配置已保存！将在下次截图时生效。",
+
+            captureSuccessTitle: "✅ 截图成功！",
+            customFilenameLabel: "文件名：",
+            filenamePlaceholder: "输入自定义文件名",
+            successNote: "图片已在新标签页打开，也可以使用自定义文件名下载。",
+            copyButton: "复制",
+            downloadButton: "📥 下载",
+
+            splitImageWarning: "注意：页面过大，Chrome 无法截取为单张图片，将拆分为",
+            multipleImages: "多",
+            images: "张图片。",
+
+            invalidUrlTitle: "🚫 无效 URL",
+            invalidUrlMessage: "受 Chrome 应用商店政策限制，整页截图无法在此 URL 上运行。",
             invalidUrlTips: [
-                "Thử một trang web khác",
-                "Giới hạn này áp dụng cho các trang chrome:// và extension",
-                "Hầu hết các trang web thông thường đều hoạt động tốt"
-            ],
-            
-            captureFailedTitle: "⚠️ Chụp thất bại",
-            captureFailedMessage: "Đã xảy ra lỗi! Hệ thống xử lý lỗi nâng cao của chúng tôi đang xử lý:",
-            captureFailedTips: [
-                "✅ Ảnh chụp lỗi được tự động lưu để debug",
-                "🔄 Tự động thử lại với độ trễ thông minh đã được bật",
-                "📊 Kiểm tra console để biết thông tin lỗi chi tiết"
-            ],
-            tryAgainButton: "🔄 Thử lại",
-            advancedTroubleshooting: "🔧 Khắc phục sự cố nâng cao",
-            longPageTips: [
-                "Đối với các trang rất dài (>50,000px):",
-                "• Cuộn đến phần cụ thể trước khi chụp",
-                "• Bật chế độ debug trong cài đặt",
-                "• Kiểm tra ảnh chụp lỗi trong thư mục tải xuống"
-            ],
-            persistentProblemTips: [
-                "Nếu vấn đề vẫn tiếp tục:",
-                "• Báo cáo trong Chrome webstore",
-                "• Bao gồm URL và phiên bản Chrome",
-                "• Đính kèm ảnh chụp lỗi nếu có"
+                "请尝试其他网页",
+                "此限制适用于 chrome:// 和扩展程序页面",
+                "大多数普通网站均可正常使用"
             ],
 
-            pageTitle: "Kết quả chụp màn hình",
-            themeToggle: "Tối",
-            themeToggleLight: "Sáng",
-            infoLabel: "Thông tin:",
-            infoText: "Hình ảnh đã được chụp thành công từ trang web hiện tại.",
-            infoMultipleText: "Chụp được {count} hình ảnh từ: {url}",
-            filenameLabel: "Tên file:",
-            filenamePlaceholder: "Nhập tên file mới",
-            formatLabel: "Định dạng file:",
-            formatPng: "PNG (Chất lượng cao, trong suốt)",
-            formatJpg: "JPG (Kích thước nhỏ hơn)",
-            formatWebp: "WebP (Tối ưu cho web)",
-            formatPdf: "PDF (Tài liệu di động)",
-            locationLabel: "Vị trí lưu file:",
-            locationPlaceholder: "File sẽ được lưu vào thư mục Downloads mặc định của bạn",
-            chooseLocationButton: "Chọn vị trí lưu",
-            cropTitle: "Cắt ảnh",
-            cropEnable: "Bật chế độ cắt",
-            cropDimensions: "Chọn vùng cần cắt trên ảnh",
-            cropReset: "Đặt lại",
-            cropApply: "Áp dụng",
-            cropDisable: "Tắt cắt",
-            dragToMove: "Kéo để di chuyển",
-            downloadButton: "Tải xuống",
-            downloadAllButton: "Tải xuống tất cả",
-            imageInfo: "Hình ảnh {index} / {total}",
-            croppedStatus: " (Đã cắt)",
-            croppedImageStatus: "Hình ảnh đã cắt",
-            noImageFoundTitle: "Không tìm thấy hình ảnh",
-            noImageFoundMessage: "Không có dữ liệu chụp màn hình nào được tìm thấy.",
-            willAskLocation: "Trình duyệt sẽ hỏi nơi lưu từng file khi tải xuống",
-            autoSave: "Tự động lưu",
-            autoSaveTooltip: "Nhấp để chuyển về chế độ tự động lưu vào thư mục Downloads",
-            chooseLocationTooltip: "Nhấp để chọn nơi lưu file cho mỗi lần tải xuống",
-            pdfCreationError: "Không thể tạo được PDF. Vui lòng thử lại sau",
-            pdfLibraryError: "PDF library chưa được tải lên. Vui lòng thử lại sau vài giây",
-            cropTooSmallError: "Diện tích cắt quá nhỏ! Vui lòng chọn vùng lớn hơn",
-            cropSuccessMessage: "Cắt áp dụng thành công! ({format})",
-            copySuccessMessage: "Đã sao chép ảnh vào clipboard!",
-            copyErrorMessage: "Không thể sao chép ảnh. Trình duyệt có thể không hỗ trợ tính năng này."
+            captureFailedTitle: "⚠️ 截图失败",
+            captureFailedMessage: "出现了问题！增强错误处理机制正在处理：",
+            captureFailedTips: [
+                "✅ 错误截图已自动保存，便于调试",
+                "🔄 已启用智能延迟自动重试",
+                "📊 查看控制台获取详细错误信息"
+            ],
+            tryAgainButton: "🔄 重试",
+            advancedTroubleshooting: "🔧 高级故障排查",
+            longPageTips: [
+                "对于超长页面（>50,000px）：",
+                "• 截图前先滚动到指定区域",
+                "• 在设置中开启调试模式",
+                "• 在下载目录中查看错误截图"
+            ],
+            persistentProblemTips: [
+                "如果问题仍然存在：",
+                "• 反馈时请附上页面 URL 和 Chrome 版本",
+                "• 如有错误截图请一并附上"
+            ],
+
+            pageTitle: "截图结果",
+            themeToggle: "深色",
+            themeToggleLight: "浅色",
+            infoLabel: "信息：",
+            infoText: "已成功截取当前网页的图片。",
+            infoMultipleText: "已从以下页面截取 {count} 张图片：{url}",
+            filenameLabel: "文件名：",
+            filenamePlaceholder: "输入新文件名",
+            formatLabel: "文件格式：",
+            formatPng: "PNG（高质量，透明）",
+            formatJpg: "JPG（体积较小）",
+            formatWebp: "WebP（Web 优化）",
+            formatPdf: "PDF（便携文档）",
+            locationLabel: "保存位置：",
+            locationPlaceholder: "文件将保存到默认下载目录",
+            chooseLocationButton: "选择位置",
+            cropTitle: "裁剪图片",
+            cropEnable: "开启裁剪模式",
+            cropDimensions: "在图片上选择要裁剪的区域",
+            cropReset: "重置",
+            cropApply: "应用",
+            cropDisable: "关闭裁剪",
+            dragToMove: "拖动移动",
+            downloadButton: "下载",
+            downloadAllButton: "全部下载",
+            imageInfo: "图片 {index} / {total}",
+            croppedStatus: "（已裁剪）",
+            croppedImageStatus: "图片已裁剪",
+            noImageFoundTitle: "未找到图片",
+            noImageFoundMessage: "未找到任何截图数据。",
+            willAskLocation: "下载时浏览器会询问每个文件的保存位置",
+            autoSave: "自动保存",
+            autoSaveTooltip: "点击切换回自动保存到下载目录",
+            chooseLocationTooltip: "点击选择每次下载的保存位置",
+            pdfCreationError: "无法创建 PDF，请稍后重试",
+            pdfLibraryError: "PDF 库尚未加载完成，请稍等几秒后重试",
+            cropTooSmallError: "裁剪区域太小！请选择更大的区域",
+            cropSuccessMessage: "裁剪应用成功！（{format}）",
+            copySuccessMessage: "图片已复制到剪贴板！",
+            copyErrorMessage: "无法复制图片，您的浏览器可能不支持此功能。"
         }
     },
     
@@ -270,7 +269,7 @@ const Languages = {
     
     // 切换语言并保存偏好
     switchLanguage() {
-        this.currentLang = this.currentLang === 'en' ? 'vi' : 'en';
+        this.currentLang = this.currentLang === 'en' ? 'zh' : 'en';
         
         // 保存语言偏好
         chrome.storage.local.set({language: this.currentLang});
@@ -336,7 +335,7 @@ const Languages = {
             `;
             
             // 根据当前语言设置按钮文字
-            languageButton.innerHTML = this.currentLang === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN';
+            languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
             
             // 点击时切换语言
             languageButton.addEventListener('click', (e) => {
@@ -345,7 +344,7 @@ const Languages = {
                 e.stopPropagation();
                 
                 // 切换语言
-                this.currentLang = this.currentLang === 'en' ? 'vi' : 'en';
+                this.currentLang = this.currentLang === 'en' ? 'zh' : 'en';
                 console.log('Switching to:', this.currentLang);
                 
                 // 保存并刷新 UI
@@ -353,7 +352,7 @@ const Languages = {
                 this.updateUI();
                 
                 // 更新按钮文字
-                languageButton.innerHTML = this.currentLang === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN';
+                languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
             });
             
             // 悬停效果
@@ -419,7 +418,7 @@ const Languages = {
             // 仅更新按钮文字
             const languageButton = document.getElementById('language-toggle-result');
             if (languageButton) {
-                languageButton.innerHTML = this.currentLang === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN';
+                languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
                 console.log('Updated result page language button text');
             }
         }
@@ -430,14 +429,14 @@ const Languages = {
         // 更新弹窗页语言按钮
         const languageButton = document.getElementById('language-toggle');
         if (languageButton && languageButton.tagName === 'BUTTON') {
-            languageButton.innerHTML = this.currentLang === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN';
+            languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
             console.log('Popup language button updated to:', this.currentLang);
         }
         
         // 更新结果页语言按钮
         const resultButton = document.getElementById('language-toggle-result');
         if (resultButton) {
-            resultButton.innerHTML = this.currentLang === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN';
+            resultButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
             console.log('Result page language button updated to:', this.currentLang);
         }
     },
