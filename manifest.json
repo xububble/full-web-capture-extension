@@ -1,0 +1,37 @@
+{
+  "name": "Full Web Capture Enhanced",
+  "version": "1.2.0",
+  "manifest_version": 2,
+  "description": "Screen capture your current page in entirety and reliably with advanced options!",
+  "browser_action": {
+    "default_icon": "icon-999.png",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+P"
+      }
+    }
+  },
+  "permissions": [ 
+    "activeTab", 
+    "storage", 
+    "unlimitedStorage", 
+    "downloads",
+    "tabs"
+  ],
+  "web_accessible_resources": [
+    "result.html",
+    "result.js",
+    "jspdf.min.js",
+    "screenshot-config.js",
+    "page.js",
+    "assets/images/*"
+  ],
+  "icons": {
+    "16": "icon16-999.png",
+    "48": "icon48-999.png",
+    "128": "icon128-999.png"
+  }
+}

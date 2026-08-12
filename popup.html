@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset=utf-8>
+      <title>Full page screen catpure</title>
+      <!-- 样式不内联时存在渲染 bug，故样式均写在行内 -->
+      <style>
+body {
+    font: normal 12px/16px helvetica,aria,sans-serif;
+}
+div,p { margin: 0; padding: 0; }
+
+.clr { overflow: hidden; }
+.left { float: left; }
+.right { float: right; }
+
+a {
+	color: #3681b3;
+	text-decoration: none;
+}
+a:hover { color: #265c80; }
+a:active { color: #000; }
+
+#wrap {
+    width: 350px;
+    padding-top: 9px;
+    font-size: 12px;
+    color: #888;
+}
+
+#wrap>div { display: none; }
+#wrap>#loading { display: block; }
+
+#loading {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px 15px;
+    margin: 10px 0;
+}
+
+#loading .loader {
+    position: relative;
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 12px;
+    height: 12px;
+    width: 240px;
+    margin: 0 auto 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+#loading .bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.4s ease-out;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(40, 167, 69, 0.3);
+}
+
+#loading .progress-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+#loading .progress-text {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    text-align: center;
+}
+
+#loading .progress-percent {
+    font-size: 12px;
+    color: #28a745;
+    font-weight: bold;
+    min-width: 35px;
+    text-align: right;
+    position: absolute;
+    right: 0;
+}
+
+p { word-wrap: break-word; }
+
+.warning {
+    margin-top: 1em;
+    color: #aa8d3b;
+    font-style: italic;
+    font-weight: bold;
+}
+.error {
+    margin-top: 1em;
+    font-weight: bold;
+    color: #b33;
+}
+.error a {
+    color: #f75;
+}
+
+/* 增强版界面样式 */
+.config-toggle {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    color: #666;
+}
+.config-toggle:hover {
+    background: #e0e0e0;
+}
+
+/* 语言下拉菜单样式 */
+.language-dropdown {
+    position: absolute;
+    top: 5px;
+    right: 80px;
+    z-index: 1000;
+}
+
+.language-dropdown-btn {
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    color: #1976d2;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    justify-content: space-between;
+}
+
+.language-dropdown-btn:hover {
+    background: #bbdefb;
+    border-color: #64b5f6;
+}
+
+.language-dropdown-btn .current-language {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.language-dropdown-btn .dropdown-arrow {
+    font-size: 8px;
+    transition: transform 0.2s ease;
+}
+
+.language-dropdown.show .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.language-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #90caf9;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-top: 2px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1001;
+    max-height: 0;
+    overflow: hidden;
+}
+
+.language-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    max-height: 200px;
+}
+
+.language-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 11px;
+    color: #333;
+}
+
+.language-option:hover {
+    background-color: #f5f5f5;
+}
+
+.language-option.active {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    font-weight: bold;
+}
+
+.language-option .flag {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+}
+
+.language-option .language-name {
+    flex: 1;
+}
+
+.version-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #4CAF50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* 加载动画容器 */
+.loading-gif-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 20px 45px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+    position: relative;
+}
+
+.loading-gif {
+    width: 80px;
+    height: auto;
+    margin: 0 auto 15px auto;
+    display: block;
+}
+
+.loading-gif-text {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.loading-gif-subtext {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.enhanced-error {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.enhanced-error h4 {
+    color: #856404;
+    margin: 0 0 8px 0;
+    font-size: 14px;
+}
+
+.enhanced-error ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.enhanced-error li {
+    margin: 4px 0;
+    color: #856404;
+}
+
+.retry-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 8px;
+    font-size: 11px;
+}
+
+.retry-btn:hover {
+    background: #0056b3;
+}
+
+.config-panel {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 11px;
+}
+
+.config-group {
+    margin: 8px 0;
+}
+
+.config-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 3px;
+    color: #495057;
+}
+
+.config-group select, .config-group input {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.config-actions {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.config-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin: 0 3px;
+    font-size: 10px;
+}
+
+.config-btn:hover {
+    background: #218838;
+}
+
+.config-btn.secondary {
+    background: #6c757d;
+}
+
+.config-btn.secondary:hover {
+    background: #5a6268;
+}
+
+/* 成功界面与下载按钮样式 */
+#success {
+    margin-top: 1em;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+#success h3 {
+    color: #4CAF50;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+#success input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+#success .download-btn {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+#success .download-btn:hover {
+    background-color: #45a049;
+}
+.file-options {
+    margin-bottom: 15px;
+}
+.file-options label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+.note {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 12px;
+    font-style: italic;
+}
+      </style>
+  </head>
+  <body>
+      <div id="wrap">
+          <div class="config-toggle" onclick="toggleConfig()">⚙️ Config</div>
+          
+          <div id="loading">
+              <div class="progress-info">
+                  <span class="progress-text" id="progress-text">Initializing capture...</span>
+                  <span class="progress-percent" id="progress-percent">0%</span>
+              </div>
+              <div class="loader"><div class="bar" id="bar"></div></div>
+          </div>
+
+          <!-- 配置面板 -->
+          <div id="config-panel" class="config-panel" style="display: none;">
+              <h4 style="margin: 0 0 10px 0; color: #495057;">📸 Screenshot Configuration</h4>
+              
+              <div class="config-group">
+                  <label>Format:</label>
+                  <select id="config-format">
+                      <option value="png">PNG (Lossless, larger size)</option>
+                      <option value="jpeg">JPEG (Compressed, smaller size)</option>
+                  </select>
+              </div>
+              
+              <div class="config-group" id="quality-group" style="display: none;">
+                  <label>JPEG Quality: <span id="quality-value">90</span>%</label>
+                  <input type="range" id="config-quality" min="10" max="100" step="10" value="90">
+              </div>
+              
+              <div class="config-group">
+                  <label>Timeout (seconds):</label>
+                  <input type="number" id="config-timeout" min="5" max="120" value="30">
+              </div>
+              
+              <div class="config-group">
+                  <label>Retry Attempts:</label>
+                  <input type="number" id="config-retries" min="1" max="10" value="3">
+              </div>
+              
+              <div class="config-group">
+                  <label>
+                      <input type="checkbox" id="config-error-screenshot" checked> Capture error screenshots
+                  </label>
+              </div>
+              
+              <div class="config-group">
+                  <label>
+                      <input type="checkbox" id="config-debug"> Debug mode (detailed logs)
+                  </label>
+              </div>
+              
+              <div class="config-group">
+                  <label>
+                      <input type="checkbox" id="config-smooth-scroll"> Smooth scrolling (slower but smoother)
+                  </label>
+              </div>
+              
+              <div class="config-group">
+                  <label>
+                      <input type="checkbox" id="config-wait-images" checked> Wait for images to load
+                  </label>
+              </div>
+              
+              <div class="config-group">
+                  <label>Scroll overlap: <span id="overlap-value">20</span>%</label>
+                  <input type="range" id="config-scroll-overlap" min="10" max="50" step="5" value="20">
+              </div>
+              
+              <div class="config-actions">
+                  <button class="config-btn" onclick="saveConfig()">💾 Save</button>
+                  <button class="config-btn secondary" onclick="resetConfig()">🔄 Reset</button>
+                  <button class="config-btn secondary" onclick="toggleConfig()">✕ Close</button>
+              </div>
+          </div>
+          
+          <!-- 成功提示界面 -->
+          <div id="success">
+              <h3>✅ Capture Success!</h3>
+              <div class="file-options">
+                  <label for="custom-filename">File name:</label>
+                  <input type="text" id="custom-filename" placeholder="Enter custom file name">
+              </div>
+              <p class="note">Image has been opened in a new tab. You can also download with custom name.</p>
+              <button id="download-btn" class="download-btn">📥 Download</button>
+          </div>
+          
+          <div id="split-image" class="warning">
+              Note: your page is too large for the Chrome browser to capture as
+              one image. It will be split into <span id="screenshot-count">multiple</span>
+              images.
+          </div>
+          
+          <div id="invalid" class="error enhanced-error">
+              <h4>🚫 Invalid URL</h4>
+              <p>Full Page Screen Capture cannot run on this URL due to Chrome Web Store policies.</p>
+              <ul>
+                  <li>Try another web page</li>
+                  <li>This restriction applies to chrome:// and extension pages</li>
+                  <li>Most regular websites work fine</li>
+              </ul>
+          </div>
+          
+          <div id="uh-oh" class="error enhanced-error">
+              <h4>⚠️ Capture Failed</h4>
+              <p>Something went wrong! Our enhanced error handling is working on it:</p>
+              <ul>
+                  <li>✅ Error screenshot automatically saved for debugging</li>
+                  <li>🔄 Auto-retry with smart delay enabled</li>
+                  <li>📊 Check console for detailed error information</li>
+              </ul>
+              <button class="retry-btn" onclick="retryCapture()">🔄 Try Again</button>
+              <br><br>
+              <details style="margin-top: 10px;">
+                  <summary style="cursor: pointer; color: #007bff;">🔧 Advanced Troubleshooting</summary>
+                  <div style="margin-top: 8px; font-size: 10px; color: #666;">
+                      <strong>For very long pages (>50,000px):</strong><br>
+                      • Scroll to specific section before capturing<br>
+                      • Enable debug mode in settings<br>
+                      • Check error screenshots in downloads<br><br>
+                      
+                      <strong>If problem persists:</strong><br>
+                      • Include URL and Chrome version when reporting the issue<br>
+                      • Attach error screenshot if available
+                  </div>
+              </details>
+          </div>
+          
+          <div id="long-page" class="loading-gif-container" style="display: none;">
+              <img src="assets/images/loading.gif" alt="Loading Animation" class="loading-gif" 
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <div class="loading-gif-text" style="display: none;">⏳ Processing large page...</div>
+              <div class="loading-gif-text">Processing large page...</div>
+              <div class="loading-gif-subtext">Please wait while we capture all content</div>
+          </div>
+      </div>
+
+      <!-- 加载页面脚本 -->
+      <script src="languages.js"></script>
+      <script src="screenshot-config.js"></script>
+      <script src="api.js"></script>
+      <script src="popup.js"></script>
+      
+      <script>
+          // 弹窗增强功能
+          function toggleConfig() {
+              const panel = document.getElementById('config-panel');
+              const loading = document.getElementById('loading');
+              
+              if (panel.style.display === 'none') {
+                  panel.style.display = 'block';
+                  loading.style.display = 'none';
+              } else {
+                  panel.style.display = 'none';
+                  loading.style.display = 'block';
+              }
+          }
+          
+          // 测试多语言系统
+          function testLanguageSystem() {
+              console.log('Testing language system...');
+              if (typeof Languages !== 'undefined') {
+                  console.log('Languages object available:', Languages);
+                  console.log('Current language:', Languages.currentLang);
+                  const testText = Languages.getText('configToggle');
+                  console.log('Test translation:', testText);
+              } else {
+                  console.error('Languages object not available!');
+              }
+          }
+          
+          function saveConfig() {
+              if (typeof ScreenshotConfig !== 'undefined') {
+                  const newConfig = {
+                      format: document.getElementById('config-format').value,
+                      quality: parseInt(document.getElementById('config-quality').value),
+                      timeout: parseInt(document.getElementById('config-timeout').value) * 1000,
+                      retryAttempts: parseInt(document.getElementById('config-retries').value),
+                      errorScreenshot: document.getElementById('config-error-screenshot').checked,
+                      debugMode: document.getElementById('config-debug').checked,
+                      smoothScroll: document.getElementById('config-smooth-scroll').checked,
+                      waitImages: document.getElementById('config-wait-images').checked,
+                      scrollOverlap: parseInt(document.getElementById('config-scroll-overlap').value)
+                  };
+                  
+                  ScreenshotConfig.updateConfig(newConfig);
+                  
+                  // 提示文案优先使用多语言系统
+                  if (typeof Languages !== 'undefined') {
+                      alert(Languages.getText('configSaved'));
+                  } else {
+                      alert('✅ Configuration saved! Changes will apply to next capture.');
+                  }
+              }
+          }
+          
+          function resetConfig() {
+              if (typeof ScreenshotConfig !== 'undefined') {
+                  ScreenshotConfig.resetConfig();
+                  location.reload();
+              }
+          }
+          
+          // 加载已保存的配置并初始化多语言系统
+          document.addEventListener('DOMContentLoaded', function() {
+              console.log('Popup DOM loaded');
+              
+              // 测试多语言系统
+              setTimeout(testLanguageSystem, 200);
+              
+              // 先初始化多语言系统
+              if (typeof Languages !== 'undefined') {
+                  console.log('Initializing Languages...');
+                  Languages.init();
+              } else {
+                  console.error('Languages not loaded!');
+              }
+              
+              if (typeof ScreenshotConfig !== 'undefined') {
+                  ScreenshotConfig.loadConfig(function(config) {
+                      document.getElementById('config-format').value = config.format;
+                      document.getElementById('config-quality').value = config.quality;
+                      document.getElementById('config-timeout').value = config.timeout / 1000;
+                      document.getElementById('config-retries').value = config.retryAttempts;
+                      document.getElementById('config-error-screenshot').checked = config.errorScreenshot;
+                      document.getElementById('config-debug').checked = config.debugMode;
+                      document.getElementById('config-smooth-scroll').checked = config.smoothScroll;
+                      document.getElementById('config-wait-images').checked = config.waitImages;
+                      document.getElementById('config-scroll-overlap').value = config.scrollOverlap;
+                      
+                      // 显示/隐藏质量设置组
+                      const qualityGroup = document.getElementById('quality-group');
+                      qualityGroup.style.display = config.format === 'jpeg' ? 'block' : 'none';
+                  });
+              }
+              
+              // 格式切换处理
+              document.getElementById('config-format').addEventListener('change', function() {
+                  const qualityGroup = document.getElementById('quality-group');
+                  qualityGroup.style.display = this.value === 'jpeg' ? 'block' : 'none';
+              });
+              
+              // 质量滑块处理
+              document.getElementById('config-quality').addEventListener('input', function() {
+                  document.getElementById('quality-value').textContent = this.value;
+              });
+              
+              // 滚动重叠度滑块处理
+              document.getElementById('config-scroll-overlap').addEventListener('input', function() {
+                  document.getElementById('overlap-value').textContent = this.value;
+              });
+          });
+      </script>
+  </body>
+</html>
