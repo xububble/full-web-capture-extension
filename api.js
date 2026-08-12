@@ -9,6 +9,9 @@ window.CaptureAPI = (function() {
     // 缓存已截取的 blob，供后续下载使用
     var capturedBlobs = [];
 
+    // FileSystem 兜底模式的存储键名前缀（截图 dataURL 存入 chrome.storage.local）
+    var STORAGE_FALLBACK_PREFIX = 'capture_fallback_';
+
     // 允许注入脚本的 URL 协议白名单
     var matches = ['http://*/*', 'https://*/*', 'ftp://*/*', 'file://*/*'],
         // Chrome 应用商店页面禁止注入
@@ -186,6 +189,24 @@ window.CaptureAPI = (function() {
     function saveBlob(blob, filename, index, callback, errback) {
         filename = _addFilenameSuffix(filename, index);
 
+        var reqFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
+
+        // FileSystem API 在新版 Chrome 已废弃：兜底转 dataURL 存入 chrome.storage，
+        // 结果页通过 storage: 前缀标记读取
+        if (!reqFileSystem) {
+            var reader = new FileReader();
+            reader.onload = function() {
+                var item = {};
+                item[STORAGE_FALLBACK_PREFIX + index] = reader.result;
+                chrome.storage.local.set(item, function() {
+                    callback('storage:' + STORAGE_FALLBACK_PREFIX + index);
+                });
+            };
+            reader.onerror = function() { errback('storage fallback failed'); };
+            reader.readAsDataURL(blob);
+            return;
+        }
+
         function onwriteend() {
             var urlName = ('filesystem:chrome-extension://' +
                            chrome.i18n.getMessage('@@extension_id') +
@@ -197,7 +218,6 @@ window.CaptureAPI = (function() {
         // 预留少量缓冲空间
         var size = blob.size + (1024 / 2);
 
-        var reqFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
         reqFileSystem(window.TEMPORARY, size, function(fs){
             fs.root.getFile(filename, {create: true}, function(fileEntry) {
                 fileEntry.createWriter(function(fileWriter) {
@@ -256,8 +276,8 @@ window.CaptureAPI = (function() {
             }
         });
 
-        // 向目标页面注入滚动截屏脚本
-        chrome.tabs.executeScript(tab.id, {file: 'page.js'}, function() {
+        // 向目标页面注入滚动截屏脚本（MV3 使用 chrome.scripting API）
+        chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['page.js']}, function() {
             if (chrome.runtime.lastError) {
                 console.error('Script injection failed:', chrome.runtime.lastError);
                 errback('script injection failed');

@@ -205,7 +205,7 @@ function errorHandler(reason) {
                             <li>Page loading issues</li>
                             <li>Network connectivity problems</li>
                         </ul>
-                        <button onclick="retryCapture()" style="margin-top: 10px; padding: 5px 10px;">${Languages.getText('tryAgainButton')}</button>
+                        <button data-action="retry" style="margin-top: 10px; padding: 5px 10px;">${Languages.getText('tryAgainButton')}</button>
                     `;
                 } else {
                     errorDiv.innerHTML = `
@@ -216,9 +216,10 @@ function errorHandler(reason) {
                             <li>Page loading issues</li>
                             <li>Network connectivity problems</li>
                         </ul>
-                        <button onclick="retryCapture()" style="margin-top: 10px; padding: 5px 10px;">Try Again</button>
+                        <button data-action="retry" style="margin-top: 10px; padding: 5px 10px;">Try Again</button>
                     `;
                 }
+                bindRetryButtons(errorDiv);
             }
             show('uh-oh');
             break;
@@ -259,10 +260,19 @@ function errorHandler(reason) {
                 const tryAgainText = typeof Languages !== 'undefined' ?
                     Languages.getText('tryAgainButton') : 'Try Again';
                 genericErrorDiv.innerHTML = originalContent +
-                    `<button onclick="retryCapture()" style="margin-top: 10px; padding: 5px 10px;">${tryAgainText}</button>`;
+                    `<button data-action="retry" style="margin-top: 10px; padding: 5px 10px;">${tryAgainText}</button>`;
+                bindRetryButtons(genericErrorDiv);
             }
         show('uh-oh');
             break;
+    }
+}
+
+// 为动态注入的重试按钮绑定事件（MV3 禁止内联 onclick）
+function bindRetryButtons(container) {
+    var btns = container.querySelectorAll('button[data-action="retry"]');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', retryCapture);
     }
 }
 

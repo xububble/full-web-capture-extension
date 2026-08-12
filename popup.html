@@ -423,7 +423,7 @@ p { word-wrap: break-word; }
   </head>
   <body>
       <div id="wrap">
-          <div class="config-toggle" onclick="toggleConfig()">⚙️ Config</div>
+          <div class="config-toggle" id="config-toggle">⚙️ Config</div>
           
           <div id="loading">
               <div class="progress-info">
@@ -490,9 +490,9 @@ p { word-wrap: break-word; }
               </div>
               
               <div class="config-actions">
-                  <button class="config-btn" onclick="saveConfig()">💾 Save</button>
-                  <button class="config-btn secondary" onclick="resetConfig()">🔄 Reset</button>
-                  <button class="config-btn secondary" onclick="toggleConfig()">✕ Close</button>
+                  <button class="config-btn" id="save-config-btn">💾 Save</button>
+                  <button class="config-btn secondary" id="reset-config-btn">🔄 Reset</button>
+                  <button class="config-btn secondary" id="close-config-btn">✕ Close</button>
               </div>
           </div>
           
@@ -531,7 +531,7 @@ p { word-wrap: break-word; }
                   <li>🔄 Auto-retry with smart delay enabled</li>
                   <li>📊 Check console for detailed error information</li>
               </ul>
-              <button class="retry-btn" onclick="retryCapture()">🔄 Try Again</button>
+              <button class="retry-btn" id="retry-btn">🔄 Try Again</button>
               <br><br>
               <details style="margin-top: 10px;">
                   <summary style="cursor: pointer; color: #007bff;">🔧 Advanced Troubleshooting</summary>
@@ -549,8 +549,7 @@ p { word-wrap: break-word; }
           </div>
           
           <div id="long-page" class="loading-gif-container" style="display: none;">
-              <img src="assets/images/loading.gif" alt="Loading Animation" class="loading-gif" 
-                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <img src="assets/images/loading.gif" alt="Loading Animation" class="loading-gif" id="loading-gif-img">
               <div class="loading-gif-text" style="display: none;">⏳ Processing large page...</div>
               <div class="loading-gif-text">Processing large page...</div>
               <div class="loading-gif-subtext">Please wait while we capture all content</div>
@@ -562,116 +561,6 @@ p { word-wrap: break-word; }
       <script src="screenshot-config.js"></script>
       <script src="api.js"></script>
       <script src="popup.js"></script>
-      
-      <script>
-          // 弹窗增强功能
-          function toggleConfig() {
-              const panel = document.getElementById('config-panel');
-              const loading = document.getElementById('loading');
-              
-              if (panel.style.display === 'none') {
-                  panel.style.display = 'block';
-                  loading.style.display = 'none';
-              } else {
-                  panel.style.display = 'none';
-                  loading.style.display = 'block';
-              }
-          }
-          
-          // 测试多语言系统
-          function testLanguageSystem() {
-              console.log('Testing language system...');
-              if (typeof Languages !== 'undefined') {
-                  console.log('Languages object available:', Languages);
-                  console.log('Current language:', Languages.currentLang);
-                  const testText = Languages.getText('configToggle');
-                  console.log('Test translation:', testText);
-              } else {
-                  console.error('Languages object not available!');
-              }
-          }
-          
-          function saveConfig() {
-              if (typeof ScreenshotConfig !== 'undefined') {
-                  const newConfig = {
-                      format: document.getElementById('config-format').value,
-                      quality: parseInt(document.getElementById('config-quality').value),
-                      timeout: parseInt(document.getElementById('config-timeout').value) * 1000,
-                      retryAttempts: parseInt(document.getElementById('config-retries').value),
-                      errorScreenshot: document.getElementById('config-error-screenshot').checked,
-                      debugMode: document.getElementById('config-debug').checked,
-                      smoothScroll: document.getElementById('config-smooth-scroll').checked,
-                      waitImages: document.getElementById('config-wait-images').checked,
-                      scrollOverlap: parseInt(document.getElementById('config-scroll-overlap').value)
-                  };
-                  
-                  ScreenshotConfig.updateConfig(newConfig);
-                  
-                  // 提示文案优先使用多语言系统
-                  if (typeof Languages !== 'undefined') {
-                      alert(Languages.getText('configSaved'));
-                  } else {
-                      alert('✅ Configuration saved! Changes will apply to next capture.');
-                  }
-              }
-          }
-          
-          function resetConfig() {
-              if (typeof ScreenshotConfig !== 'undefined') {
-                  ScreenshotConfig.resetConfig();
-                  location.reload();
-              }
-          }
-          
-          // 加载已保存的配置并初始化多语言系统
-          document.addEventListener('DOMContentLoaded', function() {
-              console.log('Popup DOM loaded');
-              
-              // 测试多语言系统
-              setTimeout(testLanguageSystem, 200);
-              
-              // 先初始化多语言系统
-              if (typeof Languages !== 'undefined') {
-                  console.log('Initializing Languages...');
-                  Languages.init();
-              } else {
-                  console.error('Languages not loaded!');
-              }
-              
-              if (typeof ScreenshotConfig !== 'undefined') {
-                  ScreenshotConfig.loadConfig(function(config) {
-                      document.getElementById('config-format').value = config.format;
-                      document.getElementById('config-quality').value = config.quality;
-                      document.getElementById('config-timeout').value = config.timeout / 1000;
-                      document.getElementById('config-retries').value = config.retryAttempts;
-                      document.getElementById('config-error-screenshot').checked = config.errorScreenshot;
-                      document.getElementById('config-debug').checked = config.debugMode;
-                      document.getElementById('config-smooth-scroll').checked = config.smoothScroll;
-                      document.getElementById('config-wait-images').checked = config.waitImages;
-                      document.getElementById('config-scroll-overlap').value = config.scrollOverlap;
-                      
-                      // 显示/隐藏质量设置组
-                      const qualityGroup = document.getElementById('quality-group');
-                      qualityGroup.style.display = config.format === 'jpeg' ? 'block' : 'none';
-                  });
-              }
-              
-              // 格式切换处理
-              document.getElementById('config-format').addEventListener('change', function() {
-                  const qualityGroup = document.getElementById('quality-group');
-                  qualityGroup.style.display = this.value === 'jpeg' ? 'block' : 'none';
-              });
-              
-              // 质量滑块处理
-              document.getElementById('config-quality').addEventListener('input', function() {
-                  document.getElementById('quality-value').textContent = this.value;
-              });
-              
-              // 滚动重叠度滑块处理
-              document.getElementById('config-scroll-overlap').addEventListener('input', function() {
-                  document.getElementById('overlap-value').textContent = this.value;
-              });
-          });
-      </script>
+      <script src="popup-config.js"></script>
   </body>
 </html>

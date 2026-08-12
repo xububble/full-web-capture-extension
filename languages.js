@@ -456,10 +456,10 @@ const Languages = {
         this.updateElement('label[for="config-timeout"]', 'timeoutLabel');
         this.updateElement('label[for="config-retries"]', 'retryLabel');
         
-        // 按钮
-        this.updateElement('button[onclick="saveConfig()"]', 'saveButton');
-        this.updateElement('button[onclick="resetConfig()"]', 'resetButton');
-        this.updateElement('button[onclick="toggleConfig()"]', 'closeButton');
+        // 按钮（MV3 移除内联 onclick 后改用 id 选择器）
+        this.updateElement('#save-config-btn', 'saveButton');
+        this.updateElement('#reset-config-btn', 'resetButton');
+        this.updateElement('#close-config-btn', 'closeButton');
         
         // 成功页
         this.updateElement('#success h3', 'captureSuccessTitle');
@@ -575,7 +575,7 @@ const Languages = {
                 <ul>
                     ${failedTips.map(tip => `<li>${tip}</li>`).join('')}
                 </ul>
-                <button class="retry-btn" onclick="retryCapture()">${this.getText('tryAgainButton')}</button>
+                <button class="retry-btn" data-action="retry">${this.getText('tryAgainButton')}</button>
                 <br><br>
                 <details style="margin-top: 10px;">
                     <summary style="cursor: pointer; color: #007bff;">${this.getText('advancedTroubleshooting')}</summary>
@@ -588,6 +588,12 @@ const Languages = {
                     </div>
                 </details>
             `;
+
+            // 为重试按钮绑定事件（innerHTML 重建后原事件已失效，MV3 禁止内联 onclick）
+            const retryBtn = uhOh.querySelector('button[data-action="retry"]');
+            if (retryBtn && typeof retryCapture === 'function') {
+                retryBtn.addEventListener('click', retryCapture);
+            }
         }
         
         // 更新长页面处理提示

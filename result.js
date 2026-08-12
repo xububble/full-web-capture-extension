@@ -83,11 +83,11 @@ function loadCaptureData() {
     const urlParams = new URLSearchParams(window.location.search);
     const imageUrls = urlParams.get('images');
     const pageUrl = urlParams.get('url');
-    
+
     if (imageUrls) {
         originalUrls = imageUrls.split(',');
         currentPageUrl = pageUrl || 'Unknown';
-        displayImages();
+        resolveAndDisplay();
     } else {
         // URL 无参数时回退到 localStorage
         const storedData = localStorage.getItem('captureData');
@@ -95,13 +95,26 @@ function loadCaptureData() {
             const data = JSON.parse(storedData);
             originalUrls = data.images || [];
             currentPageUrl = data.url || 'Unknown';
-            displayImages();
+            resolveAndDisplay();
         } else {
             showError();
         }
     }
-    
+
     loadSavedDownloadPath();
+}
+
+// FileSystem 兜底模式：storage: 前缀的标记需从 chrome.storage 还原为 dataURL 再展示
+function resolveAndDisplay() {
+    if (!originalUrls.length || originalUrls[0].indexOf('storage:') !== 0) {
+        displayImages();
+        return;
+    }
+    var keys = originalUrls.map(function(u) { return u.replace('storage:', ''); });
+    chrome.storage.local.get(keys, function(result) {
+        originalUrls = keys.map(function(k) { return result[k]; });
+        displayImages();
+    });
 }
 
 // 恢复上次保存的下载位置设置
