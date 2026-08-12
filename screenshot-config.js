@@ -16,7 +16,6 @@ window.ScreenshotConfig = (function() {
 
         // 错误处理（参考 Playwright 错误处理模式）
         retryAttempts: 2,          // 失败重试次数
-        errorScreenshot: true,      // 出错时保存截图便于调试
         errorNaming: true,          // 错误截图使用系统化命名
 
         // 高级选项
@@ -30,7 +29,8 @@ window.ScreenshotConfig = (function() {
 
         // 性能选项
         scrollDelay: 50,           // 滚动间隔（毫秒）
-        captureDelay: 30,          // 截屏间隔（毫秒）
+        // Chrome captureVisibleTab 上限为每秒 2 次，保留 50ms 调度余量。
+        captureDelay: 550,         // 截屏间隔（毫秒）
         maxPageSize: 50000,        // 页面尺寸上限，防止内存溢出
 
         // 调试选项
@@ -110,7 +110,10 @@ window.ScreenshotConfig = (function() {
 
     // 生成成功截图的文件名
     function getSuccessFilename(options = {}) {
-        return generateFilename(currentConfig.filenamePattern, options);
+        const filename = generateFilename(currentConfig.filenamePattern, options);
+        const extension = currentConfig.format === 'jpeg' ? 'jpg' : 'png';
+        return new RegExp(`\\.${extension}$`, 'i').test(filename) ? filename :
+            `${filename}.${extension}`;
     }
 
     // 生成错误截图的文件名（带错误类型后缀）
@@ -170,13 +173,6 @@ window.ScreenshotConfig = (function() {
                 <div class="config-group">
                     <label>Retry Attempts:</label>
                     <input type="number" id="config-retries" min="1" max="10" value="${currentConfig.retryAttempts}">
-                </div>
-
-                <div class="config-group">
-                    <label>
-                        <input type="checkbox" id="config-error-screenshot" ${currentConfig.errorScreenshot ? 'checked' : ''}>
-                        Capture error screenshots
-                    </label>
                 </div>
 
                 <div class="config-group">
@@ -250,7 +246,6 @@ window.ScreenshotConfig = (function() {
             quality: parseInt(document.getElementById('config-quality')?.value) || currentConfig.quality,
             timeout: (parseInt(document.getElementById('config-timeout')?.value) || 30) * 1000,
             retryAttempts: parseInt(document.getElementById('config-retries')?.value) || currentConfig.retryAttempts,
-            errorScreenshot: document.getElementById('config-error-screenshot')?.checked || false,
             debugMode: document.getElementById('config-debug')?.checked || false
         };
 

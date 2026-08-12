@@ -35,10 +35,9 @@ function saveConfig() {
             quality: parseInt(document.getElementById('config-quality').value),
             timeout: parseInt(document.getElementById('config-timeout').value) * 1000,
             retryAttempts: parseInt(document.getElementById('config-retries').value),
-            errorScreenshot: document.getElementById('config-error-screenshot').checked,
             debugMode: document.getElementById('config-debug').checked,
             smoothScroll: document.getElementById('config-smooth-scroll').checked,
-            waitImages: document.getElementById('config-wait-images').checked,
+            waitForImages: document.getElementById('config-wait-images').checked,
             scrollOverlap: parseInt(document.getElementById('config-scroll-overlap').value)
         };
 
@@ -65,16 +64,8 @@ function resetConfig() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Popup DOM loaded');
 
-    // 测试多语言系统
+    // languages.js 在 DOMContentLoaded 时负责唯一一次语言初始化。
     setTimeout(testLanguageSystem, 200);
-
-    // 先初始化多语言系统
-    if (typeof Languages !== 'undefined') {
-        console.log('Initializing Languages...');
-        Languages.init();
-    } else {
-        console.error('Languages not loaded!');
-    }
 
     if (typeof ScreenshotConfig !== 'undefined') {
         ScreenshotConfig.loadConfig(function(config) {
@@ -82,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('config-quality').value = config.quality;
             document.getElementById('config-timeout').value = config.timeout / 1000;
             document.getElementById('config-retries').value = config.retryAttempts;
-            document.getElementById('config-error-screenshot').checked = config.errorScreenshot;
             document.getElementById('config-debug').checked = config.debugMode;
             document.getElementById('config-smooth-scroll').checked = config.smoothScroll;
             document.getElementById('config-wait-images').checked = config.waitImages;

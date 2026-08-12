@@ -176,9 +176,27 @@ function updateProgressUI(percent, phase) {
     }
 }
 
+function showCaptureErrorDetail(reason) {
+    var errorDiv = $('uh-oh');
+    if (!errorDiv) return;
+
+    var detail = errorDiv.querySelector('[data-capture-error-detail]');
+    if (!detail) {
+        detail = document.createElement('p');
+        detail.setAttribute('data-capture-error-detail', 'true');
+        detail.style.marginTop = '8px';
+        errorDiv.appendChild(detail);
+    }
+
+    var label = typeof Languages !== 'undefined' ?
+        Languages.getText('captureErrorDetails') : 'Details:';
+    detail.textContent = label + ' ' + reason;
+}
+
 // 统一错误处理：按错误类型展示对应提示，超时自动重试
 function errorHandler(reason) {
     console.error('Capture error:', reason);
+    showCaptureErrorDetail(reason);
 
     switch(reason) {
         case 'execute timeout':
@@ -281,8 +299,6 @@ function retryCapture() {
     if (!currentTab) return;
 
     console.log('Retrying capture for:', currentTab.url);
-    var filename = getFilename(currentTab.url);
-
     // 重置界面状态
     hide('uh-oh');
     hide('invalid');
@@ -291,13 +307,10 @@ function retryCapture() {
     // 重置进度条
     updateProgressUI(0, 'initializing');
 
-    // 重新发起截屏
-    chrome.tabs.sendMessage(currentTab.id, {
-        msg: 'scrollPage',
-        config: ScreenshotConfig ? ScreenshotConfig.getConfig() : {}
-    }, function(response) {
-        console.log('Retry response:', response);
-    });
+    // 新建会话重试，不能直接向旧页面脚本发消息；旧会话的监听器和画布
+    // 已在错误处理时清理。
+    startCapture(currentTab, typeof ScreenshotConfig !== 'undefined' ?
+        ScreenshotConfig.getConfig() : {});
 }
 
 
@@ -390,7 +403,11 @@ function progress(complete) {
 }
 
 
-function splitnotifier() {
+function splitnotifier(count) {
+    var countElement = $('screenshot-count');
+    if (countElement && count) {
+        countElement.textContent = count;
+    }
     show('split-image');
 }
 
@@ -399,17 +416,7 @@ function splitnotifier() {
 // 弹窗打开后立即开始截屏（含错误处理）
 //
 
-// 启动时加载配置
-if (typeof ScreenshotConfig !== 'undefined') {
-    ScreenshotConfig.loadConfig(function(config) {
-        if (config.debugMode) {
-            console.log('Debug mode enabled - detailed logging active');
-        }
-    });
-}
-
-chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    var tab = tabs[0];
+function startCapture(tab, config) {
     currentTab = tab; // 供后续重试等流程使用
 
     // 优先使用配置模块生成文件名
@@ -420,6 +427,26 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         filename = getFilename(tab.url);
     }
 
-    CaptureAPI.captureToFiles(tab, filename, displayCaptures,
+    CaptureAPI.captureToFiles(tab, filename, config, displayCaptures,
                               errorHandler, progress, splitnotifier);
+}
+
+chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    var tab = tabs[0];
+    if (!tab) {
+        errorHandler('no active tab');
+        return;
+    }
+
+    // 截图必须等到配置从 storage 恢复完毕，避免首张图总是使用默认值。
+    if (typeof ScreenshotConfig !== 'undefined') {
+        ScreenshotConfig.loadConfig(function(config) {
+            if (config.debugMode) {
+                console.log('Debug mode enabled - detailed logging active');
+            }
+            startCapture(tab, config);
+        });
+    } else {
+        startCapture(tab, {});
+    }
 });

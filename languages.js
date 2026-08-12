@@ -60,10 +60,10 @@ const Languages = {
             
             // 截图失败错误
             captureFailedTitle: "⚠️ Capture Failed",
-            captureFailedMessage: "Something went wrong! Our enhanced error handling is working on it:",
+            captureFailedMessage: "The capture could not complete:",
+            captureErrorDetails: "Details:",
             captureFailedTips: [
-                "✅ Error screenshot automatically saved for debugging",
-                "🔄 Auto-retry with smart delay enabled",
+                "🔄 The failed frame was retried before capture stopped",
                 "📊 Check console for detailed error information"
             ],
             tryAgainButton: "🔄 Try Again",
@@ -72,13 +72,13 @@ const Languages = {
                 "For very long pages (>50,000px):",
                 "• Scroll to specific section before capturing",
                 "• Enable debug mode in settings",
-                "• Check error screenshots in downloads"
+                "• Retry after the page has finished loading"
             ],
             persistentProblemTips: [
                 "If problem persists:",
                 "• Report in Chrome webstore",
                 "• Include URL and Chrome version",
-                "• Attach error screenshot if available"
+                "• Include the extension error text"
             ],
 
             // 结果页
@@ -176,10 +176,10 @@ const Languages = {
             ],
 
             captureFailedTitle: "⚠️ 截图失败",
-            captureFailedMessage: "出现了问题！增强错误处理机制正在处理：",
+            captureFailedMessage: "截图未能完成：",
+            captureErrorDetails: "详情：",
             captureFailedTips: [
-                "✅ 错误截图已自动保存，便于调试",
-                "🔄 已启用智能延迟自动重试",
+                "🔄 失败分区已在停止前自动重试",
                 "📊 查看控制台获取详细错误信息"
             ],
             tryAgainButton: "🔄 重试",
@@ -188,12 +188,12 @@ const Languages = {
                 "对于超长页面（>50,000px）：",
                 "• 截图前先滚动到指定区域",
                 "• 在设置中开启调试模式",
-                "• 在下载目录中查看错误截图"
+                "• 等页面加载完毕后再重试"
             ],
             persistentProblemTips: [
                 "如果问题仍然存在：",
                 "• 反馈时请附上页面 URL 和 Chrome 版本",
-                "• 如有错误截图请一并附上"
+                "• 请附上扩展报错文本"
             ],
 
             pageTitle: "截图结果",
@@ -241,30 +241,39 @@ const Languages = {
     
     // 当前语言
     currentLang: 'en',
+    _initPromise: null,
     
     // 初始化语言系统：读取已保存的语言偏好并刷新 UI
     init() {
+        if (this._initPromise) {
+            return this._initPromise;
+        }
+
         console.log('Languages.init() called');
-        
-        // 读取已保存的语言偏好
-        chrome.storage.local.get(['language'], (result) => {
-            console.log('Language preference loaded:', result);
-            
-            if (result.language) {
-                this.currentLang = result.language;
+
+        this._initPromise = new Promise((resolve) => {
+            // 读取已保存的语言偏好
+            chrome.storage.local.get(['language'], (result) => {
+                console.log('Language preference loaded:', result);
+
+                var normalizeLanguage = window.ExtensionCore && window.ExtensionCore.normalizeLanguage;
+                this.currentLang = normalizeLanguage ?
+                    normalizeLanguage(result.language) :
+                    (result.language === 'zh' ? 'zh' : 'en');
                 console.log('Setting language to:', this.currentLang);
-            } else {
-                console.log('No saved language, using default:', this.currentLang);
-            }
-            
-            // 先刷新 UI，再添加语言切换按钮
-            this.updateUI();
-            
-            // 稍作延迟以确保 DOM 就绪
-            setTimeout(() => {
-                this.addLanguageToggle();
-            }, 100);
+
+                // 先刷新 UI，再添加语言切换按钮
+                this.updateUI();
+
+                // 稍作延迟以确保 DOM 就绪
+                setTimeout(() => {
+                    this.addLanguageToggle();
+                    resolve(this.currentLang);
+                }, 100);
+            });
         });
+
+        return this._initPromise;
     },
     
     // 切换语言并保存偏好
@@ -280,7 +289,8 @@ const Languages = {
     
     // 按 key 获取当前语言文案，缺失时回退英文
     getText(key) {
-        return this.data[this.currentLang][key] || this.data.en[key] || key;
+        return (this.data[this.currentLang] && this.data[this.currentLang][key]) ||
+            this.data.en[key] || key;
     },
     
     // 将语言偏好写入 chrome.storage
@@ -288,6 +298,13 @@ const Languages = {
         chrome.storage.local.set({language: this.currentLang}, () => {
             console.log('Language saved:', this.currentLang);
         });
+    },
+
+    getLanguageButtonLabel() {
+        if (window.ExtensionCore && window.ExtensionCore.getLanguageButtonLabel) {
+            return window.ExtensionCore.getLanguageButtonLabel(this.currentLang);
+        }
+        return this.currentLang === 'zh' ? '🇨🇳 中' : '🇺🇸 EN';
     },
     
     // 添加带国旗的语言切换按钮（弹窗页与结果页分别处理）
@@ -335,7 +352,7 @@ const Languages = {
             `;
             
             // 根据当前语言设置按钮文字
-            languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
+            languageButton.innerHTML = this.getLanguageButtonLabel();
             
             // 点击时切换语言
             languageButton.addEventListener('click', (e) => {
@@ -343,16 +360,10 @@ const Languages = {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // 切换语言
-                this.currentLang = this.currentLang === 'en' ? 'zh' : 'en';
-                console.log('Switching to:', this.currentLang);
-                
-                // 保存并刷新 UI
-                this.saveLanguage();
-                this.updateUI();
+                this.switchLanguage();
                 
                 // 更新按钮文字
-                languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
+                languageButton.innerHTML = this.getLanguageButtonLabel();
             });
             
             // 悬停效果
@@ -418,7 +429,7 @@ const Languages = {
             // 仅更新按钮文字
             const languageButton = document.getElementById('language-toggle-result');
             if (languageButton) {
-                languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
+                languageButton.innerHTML = this.getLanguageButtonLabel();
                 console.log('Updated result page language button text');
             }
         }
@@ -429,14 +440,14 @@ const Languages = {
         // 更新弹窗页语言按钮
         const languageButton = document.getElementById('language-toggle');
         if (languageButton && languageButton.tagName === 'BUTTON') {
-            languageButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
+            languageButton.innerHTML = this.getLanguageButtonLabel();
             console.log('Popup language button updated to:', this.currentLang);
         }
         
         // 更新结果页语言按钮
         const resultButton = document.getElementById('language-toggle-result');
         if (resultButton) {
-            resultButton.innerHTML = this.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
+            resultButton.innerHTML = this.getLanguageButtonLabel();
             console.log('Result page language button updated to:', this.currentLang);
         }
     },
@@ -604,15 +615,6 @@ const Languages = {
             if (subtextElement) subtextElement.textContent = this.getText('pleaseWaitCapture');
         }
         
-        // 更新复选框标签
-        const errorScreenshotLabel = document.querySelector('label[for="config-error-screenshot"]');
-        if (errorScreenshotLabel) {
-            const checkbox = errorScreenshotLabel.querySelector('input');
-            errorScreenshotLabel.innerHTML = '';
-            errorScreenshotLabel.appendChild(checkbox);
-            errorScreenshotLabel.appendChild(document.createTextNode(' ' + this.getText('errorScreenshotLabel')));
-        }
-        
         const debugModeLabel = document.querySelector('label[for="config-debug"]');
         if (debugModeLabel) {
             const checkbox = debugModeLabel.querySelector('input');
@@ -677,4 +679,4 @@ if (typeof document !== 'undefined') {
         console.log('DOM already ready, initializing Languages immediately...');
         setTimeout(() => Languages.init(), 50);
     }
-} 
+}

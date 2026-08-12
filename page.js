@@ -1,270 +1,373 @@
-// 注入目标页面的脚本：负责滚动页面并逐屏回传截屏坐标
-var CAPTURE_DELAY = 50;    // 每帧截屏间隔（毫秒）
-var MAX_RETRIES = 2;       // 单帧失败重试次数
-var CLEANUP_TIMEOUT = 2000; // 清理超时
-var SMOOTH_SCROLL = false; // 是否启用平滑滚动
+// Injected into the target page. It scrolls one frame at a time and never
+// advances until the extension page confirms that the current frame was saved.
+(function() {
+    'use strict';
 
-function onMessage(data, sender, callback) {
-    if (data.msg === 'scrollPage') {
-        getPositions(callback);
-        return true;
-    } else if (data.msg == 'logMessage') {
-        console.log('[POPUP LOG]', data.data);
-    } else {
-        console.error('Unknown message received from background: ' + data.msg);
-    }
-}
-
-// 防止重复注入时重复注册监听
-if (!window.hasScreenCapturePage) {
-    window.hasScreenCapturePage = true;
-    chrome.runtime.onMessage.addListener(onMessage);
-}
-
-function max(nums) {
-    return Math.max.apply(Math, nums.filter(function(x) { return x; }));
-}
-
-function isPageLoading() {
-    return document.readyState !== 'complete' ||
-           window.performance.navigation.type === window.performance.navigation.TYPE_RELOAD;
-}
-
-// 等待页面加载完成，超时后强制继续
-function waitForPageReady(callback, timeout) {
-    timeout = timeout || 3000;
-    var startTime = Date.now();
-
-    function checkReady() {
-        if (!isPageLoading() || (Date.now() - startTime) > timeout) {
-            callback();
-        } else {
-            setTimeout(checkReady, 25);
-        }
-    }
-
-    checkReady();
-}
-
-function getPositions(callback) {
-    // 先上报一次初始进度
-    chrome.runtime.sendMessage({
-        msg: 'capture',
-        x: 0,
-        y: 0,
-        complete: 0.05,
-        windowWidth: window.innerWidth,
-        totalWidth: 0,
-        totalHeight: 0,
-        devicePixelRatio: window.devicePixelRatio,
-        initializing: true
-    });
-
-    waitForPageReady(function() {
-        performCapture(callback);
-    });
-}
-
-// 核心流程：计算整页尺寸 → 生成滚动坐标序列 → 逐屏滚动并通知 popup 截屏
-function performCapture(callback) {
-    var body = document.body,
-        originalBodyOverflowYStyle = body ? body.style.overflowY : '',
-        originalX = window.scrollX,
-        originalY = window.scrollY,
-        originalOverflowStyle = document.documentElement.style.overflow;
-
-    if (body) {
-        body.style.overflowY = 'visible';
-    }
-
-    // 取多种度量中的最大值作为页面真实宽高
-    var widths = [
-            document.documentElement.clientWidth,
-            body ? body.scrollWidth : 0,
-            document.documentElement.scrollWidth,
-            body ? body.offsetWidth : 0,
-            document.documentElement.offsetWidth
-        ],
-        heights = [
-            document.documentElement.clientHeight,
-            body ? body.scrollHeight : 0,
-            document.documentElement.scrollHeight,
-            body ? body.offsetHeight : 0,
-            document.documentElement.offsetHeight
-        ],
-        fullWidth = max(widths),
-        fullHeight = max(heights),
-        windowWidth = window.innerWidth,
-        windowHeight = window.innerHeight,
-        arrangements = [],
-        scrollPad = Math.min(300, windowHeight * 0.2),
-        yDelta = windowHeight - (windowHeight > scrollPad ? scrollPad : 0),
-        xDelta = windowWidth,
-        yPos = fullHeight - windowHeight,
-        xPos,
-        numArrangements,
-        startTime = Date.now();
-
-    if (fullWidth <= xDelta + 1) {
-        fullWidth = xDelta;
-    }
-
-    // 超大页面强制截断，防止内存溢出
-    if (fullHeight > 50000 || fullWidth > 50000) {
-        console.warn('Page size is very large:', fullWidth, 'x', fullHeight);
-        fullHeight = Math.min(fullHeight, 50000);
-        fullWidth = Math.min(fullWidth, 50000);
-    }
-
-    // 隐藏滚动条，避免出现在截图中
-    document.documentElement.style.overflow = 'hidden';
-
-    // 从页面底部向顶部生成滚动坐标序列
-    while (yPos > -yDelta) {
-        xPos = 0;
-        while (xPos < fullWidth) {
-            arrangements.push([xPos, yPos]);
-            xPos += xDelta;
-        }
-        yPos -= yDelta;
-    }
-
-    console.log('fullHeight', fullHeight, 'fullWidth', fullWidth);
-    console.log('windowWidth', windowWidth, 'windowHeight', windowHeight);
-    console.log('xDelta', xDelta, 'yDelta', yDelta);
-    console.log('Total arrangements:', arrangements.length);
-
-    numArrangements = arrangements.length;
-
-    // 恢复页面原始滚动状态
-    function cleanUp() {
-        try {
-            document.documentElement.style.overflow = originalOverflowStyle;
-            if (body) {
-                body.style.overflowY = originalBodyOverflowYStyle;
-            }
-            window.scrollTo(originalX, originalY);
-        } catch (e) {
-            console.error('Error during cleanup:', e);
-        }
-    }
-
-    var retryCount = 0;
-
-    // 逐屏处理：滚动 → 通知截屏 → 成功/重试 → 下一屏
-    (function processArrangements() {
-        if (!arrangements.length) {
-            cleanUp();
-            if (callback) {
-                callback();
-            }
-            return;
-        }
-
-        var next = arrangements.shift(),
-            x = next[0], y = next[1];
-
-        // 基础进度按已处理坐标数计算
-        var baseProgress = (numArrangements - arrangements.length) / numArrangements;
-
-        // 截取阶段进度封顶 95%
-        var smoothProgress = Math.min(baseProgress * 0.95, 0.95);
-
-        // 叠加少量时间维度进度，让进度条更平滑
-        var timeElapsed = Date.now() - startTime;
-        var timeProgress = Math.min(timeElapsed / (numArrangements * 100), 0.05);
-
-        var finalProgress = Math.min(smoothProgress + timeProgress, 0.98);
-
-        try {
-            smoothScrollTo(x, y, function() {
-                var actualX = window.scrollX;
-                var actualY = window.scrollY;
-
-                if (Math.abs(actualX - x) > 10 || Math.abs(actualY - y) > 10) {
-                    console.warn('Scroll position mismatch. Expected:', x, y, 'Actual:', actualX, actualY);
-                }
-
-                var data = {
-                    msg: 'capture',
-                    x: actualX,
-                    y: actualY,
-                    complete: finalProgress,
-                    windowWidth: windowWidth,
-                    totalWidth: fullWidth,
-                    totalHeight: fullHeight,
-                    devicePixelRatio: window.devicePixelRatio
-                };
-
-                window.setTimeout(function() {
-                    // 单帧响应超时则跳过，避免整个流程卡死
-                    var cleanUpTimeout = window.setTimeout(function() {
-                        console.error('Capture timeout, moving to next position...');
-                        processArrangements();
-                    }, 1500);
-
-                    chrome.runtime.sendMessage(data, function(captured) {
-                        window.clearTimeout(cleanUpTimeout);
-
-                        if (captured) {
-                            retryCount = 0;
-                            processArrangements();
-                        } else {
-                            if (retryCount < MAX_RETRIES) {
-                                retryCount++;
-                                console.log('Retrying capture, attempt:', retryCount);
-                                arrangements.unshift(next); // 失败坐标放回队列重试
-                                processArrangements();
-                            } else {
-                                console.error('Max retries exceeded, skipping position');
-                                retryCount = 0;
-                                processArrangements();
-                            }
-                        }
-                    });
-                }, CAPTURE_DELAY);
-            });
-
-        } catch (e) {
-            console.error('Error during scroll:', e);
-            cleanUp();
-        }
-    })();
-}
-
-// 平滑滚动封装（默认关闭，直接跳转）
-function smoothScrollTo(targetX, targetY, callback) {
-    if (!SMOOTH_SCROLL) {
-        window.scrollTo(targetX, targetY);
-        callback();
+    if (window.FullWebCapturePage) {
         return;
     }
 
-    var startX = window.scrollX;
-    var startY = window.scrollY;
-    var distanceX = targetX - startX;
-    var distanceY = targetY - startY;
-    var duration = 200; // 平滑滚动时长（毫秒）
-    var startTime = Date.now();
+    var MAX_PAGE_DIMENSION = 50000;
+    var SETTLE_DELAY = 75;
+    var activeCapture = null;
 
-    function animateScroll() {
-        var elapsed = Date.now() - startTime;
-        var progress = Math.min(elapsed / duration, 1);
+    function normalizeConfig(config) {
+        if (!window.ExtensionCore) {
+            throw new Error('capture core was not injected');
+        }
+        return window.ExtensionCore.normalizeCaptureConfig(config);
+    }
 
-        // ease-out 缓动
-        var easeProgress = 1 - Math.pow(1 - progress, 3);
+    function getScrollRoot() {
+        return document.scrollingElement || document.documentElement || document.body;
+    }
 
-        var currentX = startX + (distanceX * easeProgress);
-        var currentY = startY + (distanceY * easeProgress);
+    function getScrollX() {
+        var root = getScrollRoot();
+        return window.scrollX || (root && root.scrollLeft) || 0;
+    }
 
-        window.scrollTo(currentX, currentY);
+    function getScrollY() {
+        var root = getScrollRoot();
+        return window.scrollY || (root && root.scrollTop) || 0;
+    }
 
-        if (progress < 1) {
-            requestAnimationFrame(animateScroll);
-        } else {
-            callback();
+    function scrollToPosition(x, y) {
+        var root = getScrollRoot();
+        window.scrollTo(x, y);
+
+        // Some pages make body, rather than documentElement, the scroll root.
+        if (root) {
+            root.scrollLeft = x;
+            root.scrollTop = y;
         }
     }
 
-    requestAnimationFrame(animateScroll);
-}
+    function getPageSize() {
+        var body = document.body || { scrollWidth: 0, scrollHeight: 0, offsetWidth: 0, offsetHeight: 0 };
+        var html = document.documentElement;
+        var root = getScrollRoot();
+
+        return {
+            width: Math.min(MAX_PAGE_DIMENSION, Math.max(
+                window.innerWidth,
+                body.scrollWidth, body.offsetWidth,
+                html.scrollWidth, html.offsetWidth,
+                root ? root.scrollWidth : 0
+            )),
+            height: Math.min(MAX_PAGE_DIMENSION, Math.max(
+                window.innerHeight,
+                body.scrollHeight, body.offsetHeight,
+                html.scrollHeight, html.offsetHeight,
+                root ? root.scrollHeight : 0
+            ))
+        };
+    }
+
+    function buildPositions(total, viewport, overlap) {
+        if (!window.ExtensionCore) {
+            throw new Error('capture core was not injected');
+        }
+        return window.ExtensionCore.buildScrollPositions(total, viewport, overlap);
+    }
+
+    function waitForAnimationFrames(count, callback) {
+        if (count <= 0) {
+            callback();
+            return;
+        }
+        requestAnimationFrame(function() {
+            waitForAnimationFrames(count - 1, callback);
+        });
+    }
+
+    function waitForViewportToSettle(callback) {
+        // Two animation frames give the renderer a chance to paint after a
+        // programmatic scroll. The small delay helps pages with sticky headers.
+        waitForAnimationFrames(2, function() {
+            window.setTimeout(callback, SETTLE_DELAY);
+        });
+    }
+
+    function waitForImageList(images, callback, timeoutMs) {
+        if (!images.length) {
+            callback();
+            return;
+        }
+
+        var finished = false;
+        var remaining = images.length;
+        var timeout = window.setTimeout(finish, timeoutMs || 3000);
+
+        function finish() {
+            if (finished) {
+                return;
+            }
+            finished = true;
+            window.clearTimeout(timeout);
+            callback();
+        }
+
+        images.forEach(function(image) {
+            function onImageSettled() {
+                image.removeEventListener('load', onImageSettled);
+                image.removeEventListener('error', onImageSettled);
+                remaining -= 1;
+                if (!remaining) {
+                    finish();
+                }
+            }
+            image.addEventListener('load', onImageSettled);
+            image.addEventListener('error', onImageSettled);
+        });
+    }
+
+    function waitForImages(enabled, callback) {
+        if (!enabled) {
+            callback();
+            return;
+        }
+
+        var pending = Array.prototype.filter.call(document.images || [], function(image) {
+            // Native lazy images are expected to load as we scroll, not before
+            // the first frame is captured.
+            return !image.complete && image.loading !== 'lazy';
+        });
+        waitForImageList(pending, callback, 3000);
+    }
+
+    function waitForVisibleImages(enabled, callback) {
+        if (!enabled) {
+            callback();
+            return;
+        }
+
+        var pending = Array.prototype.filter.call(document.images || [], function(image) {
+            var rect = image.getBoundingClientRect();
+            var deferredSource = image.dataset && image.dataset.src && !image.currentSrc;
+            return (!image.complete || deferredSource) && rect.bottom > 0 && rect.top < window.innerHeight &&
+                rect.right > 0 && rect.left < window.innerWidth;
+        });
+        waitForImageList(pending, callback, 1500);
+    }
+
+    function stabilizeDocument(config, callback) {
+        var previousHeight = 0;
+        var attempts = 0;
+
+        function inspectBottom() {
+            var size = getPageSize();
+            scrollToPosition(0, size.height);
+            waitForAnimationFrames(2, function() {
+                waitForVisibleImages(config.waitForImages, function() {
+                    waitForViewportToSettle(function() {
+                        var updatedSize = getPageSize();
+                        var grew = updatedSize.height > previousHeight;
+                        previousHeight = updatedSize.height;
+                        attempts += 1;
+                        // A finite lazy-loaded page normally settles after one
+                        // or two bottom passes. Do not chase endless feeds.
+                        if (grew && attempts < 3) {
+                            inspectBottom();
+                        } else {
+                            callback(updatedSize);
+                        }
+                    });
+                });
+            });
+        }
+
+        inspectBottom();
+    }
+
+    function smoothlyScrollTo(x, y, enabled, callback) {
+        if (!enabled) {
+            scrollToPosition(x, y);
+            callback();
+            return;
+        }
+
+        var startX = getScrollX();
+        var startY = getScrollY();
+        var duration = 200;
+        var startedAt = Date.now();
+
+        function step() {
+            var progress = Math.min(1, (Date.now() - startedAt) / duration);
+            var eased = 1 - Math.pow(1 - progress, 3);
+            scrollToPosition(
+                startX + (x - startX) * eased,
+                startY + (y - startY) * eased
+            );
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                callback();
+            }
+        }
+
+        requestAnimationFrame(step);
+    }
+
+    function sendProgress(captureId, complete) {
+        chrome.runtime.sendMessage({
+            msg: 'capture:progress',
+            captureId: captureId,
+            complete: complete
+        });
+    }
+
+    function startCapture(captureId, rawConfig, done) {
+        if (activeCapture) {
+            done({ ok: false, error: 'capture already in progress' });
+            return;
+        }
+
+        var config;
+        try {
+            config = normalizeConfig(rawConfig);
+        } catch (error) {
+            done({ ok: false, error: error.message });
+            return;
+        }
+        var originalX = getScrollX();
+        var originalY = getScrollY();
+        var startedAt = Date.now();
+        var cancelled = false;
+        var completed = false;
+
+        activeCapture = {
+            id: captureId,
+            cancel: function(reason) {
+                cancelled = reason || 'capture cancelled';
+            }
+        };
+
+        function finish(result) {
+            if (completed) {
+                return;
+            }
+            completed = true;
+            scrollToPosition(originalX, originalY);
+            activeCapture = null;
+            done(result);
+        }
+
+        function hasTimedOut() {
+            return Date.now() - startedAt > config.timeout;
+        }
+
+        function abortIfNeeded() {
+            if (cancelled) {
+                finish({ ok: false, error: cancelled });
+                return true;
+            }
+            if (hasTimedOut()) {
+                finish({ ok: false, error: 'capture timeout' });
+                return true;
+            }
+            return false;
+        }
+
+        waitForImages(config.waitForImages, function() {
+            if (abortIfNeeded()) {
+                return;
+            }
+
+            stabilizeDocument(config, function(pageSize) {
+                if (abortIfNeeded()) {
+                    return;
+                }
+
+                var viewportWidth = window.innerWidth;
+                var viewportHeight = window.innerHeight;
+                var yPositions = buildPositions(pageSize.height, viewportHeight, config.scrollOverlap);
+                var xPositions = buildPositions(pageSize.width, viewportWidth, 0);
+                var frames = [];
+
+                yPositions.forEach(function(y) {
+                    xPositions.forEach(function(x) {
+                        frames.push({ x: x, y: y });
+                    });
+                });
+
+                function captureFrame(index, retries) {
+                    if (abortIfNeeded()) {
+                        return;
+                    }
+
+                    if (index >= frames.length) {
+                        finish({ ok: true });
+                        return;
+                    }
+
+                    var target = frames[index];
+                    smoothlyScrollTo(target.x, target.y, config.smoothScroll, function() {
+                        waitForAnimationFrames(2, function() {
+                            waitForVisibleImages(config.waitForImages, function() {
+                                waitForViewportToSettle(function() {
+                                    if (abortIfNeeded()) {
+                                        return;
+                                    }
+
+                                    chrome.runtime.sendMessage({
+                                        msg: 'capture:frame',
+                                        captureId: captureId,
+                                        x: getScrollX(),
+                                        y: getScrollY(),
+                                        complete: (index + 1) / frames.length,
+                                        windowWidth: viewportWidth,
+                                        totalWidth: pageSize.width,
+                                        totalHeight: pageSize.height,
+                                        devicePixelRatio: window.devicePixelRatio
+                                    }, function(response) {
+                                        var error = chrome.runtime.lastError;
+                                        if (!error && response && response.ok) {
+                                            sendProgress(captureId, (index + 1) / frames.length);
+                                            captureFrame(index + 1, 0);
+                                            return;
+                                        }
+
+                                        if (retries < config.retryAttempts && !hasTimedOut()) {
+                                            window.setTimeout(function() {
+                                                captureFrame(index, retries + 1);
+                                            }, Math.min(1000, 250 * (retries + 1)));
+                                            return;
+                                        }
+
+                                        finish({
+                                            ok: false,
+                                            error: (response && response.error) ||
+                                                (error && error.message) ||
+                                                'frame capture failed'
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                }
+
+                sendProgress(captureId, 0);
+                captureFrame(0, 0);
+            });
+        });
+    }
+
+    chrome.runtime.onMessage.addListener(function(data, sender, sendResponse) {
+        if (data.msg === 'scrollPage') {
+            startCapture(data.captureId, data.config, sendResponse);
+            return true;
+        }
+
+        if (data.msg === 'cancelCapture' && activeCapture && activeCapture.id === data.captureId) {
+            activeCapture.cancel(data.reason);
+            sendResponse({ ok: true });
+            return false;
+        }
+
+        return false;
+    });
+
+    window.FullWebCapturePage = true;
+})();

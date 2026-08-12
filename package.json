@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "node --test test/extension-core.test.js",
+    "check": "node --check extension-core.js && node --check api.js && node --check page.js && node --check popup.js && node --check popup-config.js && node --check result.js && node --check screenshot-config.js && node --check languages.js"
+  }
+}

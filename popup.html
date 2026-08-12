@@ -462,12 +462,6 @@ p { word-wrap: break-word; }
               
               <div class="config-group">
                   <label>
-                      <input type="checkbox" id="config-error-screenshot" checked> Capture error screenshots
-                  </label>
-              </div>
-              
-              <div class="config-group">
-                  <label>
                       <input type="checkbox" id="config-debug"> Debug mode (detailed logs)
                   </label>
               </div>
@@ -527,9 +521,8 @@ p { word-wrap: break-word; }
               <h4>⚠️ Capture Failed</h4>
               <p>Something went wrong! Our enhanced error handling is working on it:</p>
               <ul>
-                  <li>✅ Error screenshot automatically saved for debugging</li>
-                  <li>🔄 Auto-retry with smart delay enabled</li>
-                  <li>📊 Check console for detailed error information</li>
+                  <li>🔄 The failed frame is retried before the capture stops</li>
+                  <li>📊 Check the extension console for the error details</li>
               </ul>
               <button class="retry-btn" id="retry-btn">🔄 Try Again</button>
               <br><br>
@@ -539,11 +532,11 @@ p { word-wrap: break-word; }
                       <strong>For very long pages (>50,000px):</strong><br>
                       • Scroll to specific section before capturing<br>
                       • Enable debug mode in settings<br>
-                      • Check error screenshots in downloads<br><br>
+                      • Retry after the page has finished loading<br><br>
                       
                       <strong>If problem persists:</strong><br>
                       • Include URL and Chrome version when reporting the issue<br>
-                      • Attach error screenshot if available
+                      • Include the extension error text
                   </div>
               </details>
           </div>
@@ -557,6 +550,7 @@ p { word-wrap: break-word; }
       </div>
 
       <!-- 加载页面脚本 -->
+      <script src="extension-core.js"></script>
       <script src="languages.js"></script>
       <script src="screenshot-config.js"></script>
       <script src="api.js"></script>

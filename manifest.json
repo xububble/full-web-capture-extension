@@ -29,6 +29,7 @@
         "result.js",
         "jspdf.min.js",
         "screenshot-config.js",
+        "extension-core.js",
         "page.js",
         "assets/images/*"
       ],

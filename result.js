@@ -16,8 +16,6 @@ let currentTheme = 'light';
 // 初始化多语言系统
 function initLanguageSystem() {
     if (typeof Languages !== 'undefined') {
-        Languages.init();
-        
         // 绑定语言切换按钮事件
         const languageToggle = document.getElementById('language-toggle-result');
         if (languageToggle) {
@@ -27,13 +25,9 @@ function initLanguageSystem() {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                Languages.currentLang = Languages.currentLang === 'en' ? 'zh' : 'en';
-                console.log('Switching to:', Languages.currentLang);
+                Languages.switchLanguage();
                 
-                Languages.saveLanguage();
-                Languages.updateUI();
-                
-                languageToggle.innerHTML = Languages.currentLang === 'vi' ? '🇨🇳 中' : '🇺🇸 EN';
+                languageToggle.innerHTML = Languages.getLanguageButtonLabel();
                 
                 updateThemeToggleText();
                 // 重新渲染以应用新语言
@@ -1349,4 +1343,4 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedFormat) {
         document.getElementById('file-format').value = savedFormat;
     }
-}); 
+});
